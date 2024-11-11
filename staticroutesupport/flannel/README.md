@@ -6,11 +6,11 @@ New kubernetes cluster using default Flannel CNI. Traditionally requirements was
 
 ** Support for CIS to configure static routes in the BIG-IP with node subnets assigned to the nodes in the OpenShift/k8s cluster. This enables direct routing from BIG-IP to k8s Pods in cluster mode without VXLAN tunnel configuration on BIG-IP
 
-``
+```
 args:
   --static-routing-mode=true
   --orchestration-cni=<ovn-k8s/flannel>
-``
+```
 
 Diagram shows Configured Routes on BIG-IP
 
