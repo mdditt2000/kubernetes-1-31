@@ -14,7 +14,7 @@ args:
 
 Diagram shows Configured Routes on BIG-IP
 
-![Routes]()
+![Routes](https://github.com/mdditt2000/kubernetes-1-31/blob/main/staticroutesupport/flannel/picture/2024-11-11_15-24-09.png)
 
 CIS logs showing API call to BIG-IP to configure routes
 
