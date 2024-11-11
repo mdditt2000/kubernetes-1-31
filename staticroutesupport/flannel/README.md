@@ -18,6 +18,6 @@ Diagram shows Configured Routes on BIG-IP
 
 CIS logs showing API call to BIG-IP to configure routes
 
-``
+```
 NET Config: {"routes": [{"name": "k8s-master-cluster-1-10.192.125.177", "network": "10.244.0.0/24", "gw": "10.192.125.177"}, {"name": "k8s-work-cluster-1-10.192.125.178", "network": "10.244.1.0/24", "gw": "10.192.125.178"}]}
-``
+```
