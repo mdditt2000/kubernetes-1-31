@@ -46,7 +46,7 @@ spec:
               "--namespace=default",
               "--pool-member-type=cluster",
               "--static-routing-mode=true",
-              "--orchestration-cni=<flannel>""
+              "--orchestration-cni=flannel",
               "--log-level=DEBUG",
               "--insecure=true",
               "--custom-resource-mode=true",
