@@ -1,6 +1,6 @@
 # Setup Static Route Support with CIS and Flannel
 
-Demo on YouTube [video]()
+Demo on YouTube [video](https://youtu.be/23FcfYbdP18)
 
 New kubernetes cluster using default Flannel CNI. Traditionally requirements was to use **VXLAN** however with **StaticRouteSupport** you can move away from Tunnels!! This repo demonstrates the new feature and provides a recorded demo on YouTube
 
@@ -9,7 +9,7 @@ New kubernetes cluster using default Flannel CNI. Traditionally requirements was
 ```
 args:
   --static-routing-mode=true
-  --orchestration-cni=<ovn-k8s/flannel>
+  --orchestration-cni=<flannel>
 ```
 
 Diagram shows Configured Routes on BIG-IP
