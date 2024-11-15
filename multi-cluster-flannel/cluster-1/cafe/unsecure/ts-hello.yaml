@@ -12,12 +12,12 @@ spec:
   pool:
     multiClusterServices:
     # CIS supports to refer svs from local cluster and ha cluster
-      - clusterName: cluster1
+      - clusterName: cluster-1
         namespace: default
         service: hello-world-app
         servicePort: 8080
         weight: 50
-      - clusterName: cluster2
+      - clusterName: cluster-2
         namespace: default
         service: hello-world-app
         servicePort: 8080
