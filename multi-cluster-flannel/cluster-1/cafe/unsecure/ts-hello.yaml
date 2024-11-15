@@ -6,7 +6,7 @@ metadata:
   name: ts-hello
   namespace: default
 spec:
-  virtualServerAddress: 10.192.75.121
+  virtualServerAddress: 10.192.125.121
   virtualServerPort: 80
   mode: standard
   pool:
