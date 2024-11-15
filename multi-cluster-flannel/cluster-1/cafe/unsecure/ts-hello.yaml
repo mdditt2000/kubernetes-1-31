@@ -6,20 +6,27 @@ metadata:
   name: ts-hello
   namespace: default
 spec:
-  virtualServerAddress: "10.192.75.121"
-  virtualServerPort: 80
-  snat: auto
   mode: standard
   pool:
     multiClusterServices:
-    - clusterName: cluster-1
-      namespace: default
-      service: hello-world-app
-      servicePort: 8080
-      weight: 50
-    - clusterName: cluster-2
-      namespace: default
-      service: hello-world-app
-      servicePort: 8080
-      weight: 50
-  
+    # CIS supports to refer svs from local cluster and ha cluster
+      - clusterName: cluster1
+        namespace: default
+        service: hello-world-app
+        servicePort: 8080
+        weight: 50
+      - clusterName: cluster2
+        namespace: default
+        service: hello-world-app
+        servicePort: 8080
+        weight: 50
+    monitor:
+      interval: 20
+      timeout: 10
+      type: tcp
+    service: hello-world-app
+    servicePort: 8080
+  snat: auto
+  virtualServerAddress: 10.192.75.121
+  virtualServerPort: 80
+
