@@ -47,7 +47,7 @@ spec:
               "--pool-member-type=cluster",
               "--static-routing-mode=true",
               "--orchestration-cni=flannel",
-              "--extended-spec-configmap: kube-system/global-spec-config",
+              "--extended-spec-configmap=kube-system/extended-spec-config",
               "--multi-cluster-mode=standalone",
               "--log-level=DEBUG",
               "--insecure=true",
