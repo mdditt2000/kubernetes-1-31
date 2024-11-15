@@ -5,6 +5,8 @@ metadata:
     f5cr: "true"
   name: ts-hello
   namespace: default
+  virtualServerAddress: 10.192.75.121
+  virtualServerPort: 80
 spec:
   mode: standard
   pool:
@@ -20,13 +22,5 @@ spec:
         service: hello-world-app
         servicePort: 8080
         weight: 50
-    monitor:
-      interval: 20
-      timeout: 10
-      type: tcp
-    service: hello-world-app
-    servicePort: 8080
-  snat: auto
-  virtualServerAddress: 10.192.75.121
-  virtualServerPort: 80
+  
 
