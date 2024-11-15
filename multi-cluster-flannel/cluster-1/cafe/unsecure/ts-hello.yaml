@@ -5,9 +5,9 @@ metadata:
     f5cr: "true"
   name: ts-hello
   namespace: default
+spec:
   virtualServerAddress: 10.192.75.121
   virtualServerPort: 80
-spec:
   mode: standard
   pool:
     multiClusterServices:
