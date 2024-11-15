@@ -3,7 +3,7 @@ kind: TransportServer
 metadata:
   labels:
     f5cr: "true"
-  name: cr-transport-server
+  name: ts-hello
   namespace: default
 spec:
   virtualServerAddress: "10.192.75.121"
@@ -12,17 +12,16 @@ spec:
   mode: standard
   pool:
     multiClusterServices:
-    # CIS supports to refer svs from local cluster
-      - clusterName: cluster1
-        namespace: default
-        service: hello-world-app
-        servicePort: 8080
-        weight: 50
-      - clusterName: cluster2
-        namespace: default
-        service: hello-world-app
-        servicePort: 8080
-        weight: 50
+    - clusterName: cluster1
+      namespace: default
+      service: hello-world-app
+      servicePort: 8080
+      weight: 50
+    - clusterName: cluster2
+      namespace: default
+      service: hello-world-app
+      servicePort: 8080
+      weight: 50
     monitor:
       interval: 10
       timeout: 31
