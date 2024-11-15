@@ -12,18 +12,14 @@ spec:
   mode: standard
   pool:
     multiClusterServices:
-    - clusterName: cluster1
+    - clusterName: cluster-1
       namespace: default
       service: hello-world-app
       servicePort: 8080
       weight: 50
-    - clusterName: cluster2
+    - clusterName: cluster-2
       namespace: default
       service: hello-world-app
       servicePort: 8080
       weight: 50
-    monitor:
-      interval: 10
-      timeout: 31
-      type: tcp
   
