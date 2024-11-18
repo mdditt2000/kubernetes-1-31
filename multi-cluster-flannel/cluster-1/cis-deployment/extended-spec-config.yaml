@@ -9,7 +9,7 @@ data:
   extendedSpec: |
     mode: default
     highAvailabilityCIS:
-      primaryEndPoint: http://10.145.72.114:8001
+      primaryEndPoint: http://10.110.242.81:8080
       probeInterval: 30
       retryInterval: 3
       primaryCluster:
