@@ -22,5 +22,10 @@ spec:
         service: hello-world-app
         servicePort: 8080
         weight: 50
+      - clusterName: cluster-3
+        namespace: default
+        service: hello-world-app
+        servicePort: 8080
+        weight: 50
   
 

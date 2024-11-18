@@ -8,10 +8,16 @@ metadata:
 data:
   extendedSpec: |
     mode: default
+    highAvailabilityCIS:
+      primaryEndPoint: http://10.145.72.114:8001
+      probeInterval: 30
+      retryInterval: 3
+      primaryCluster:
+        clusterName: cluster-1
+        secret: default/kubeconfig-1
+      secondaryCluster:
+        clusterName: cluster-2
+        secret: default/kubeconfig-2
     externalClustersConfig:
-    - clusterName: cluster-1
-      secret: default/kubeconfig-1
-    - clusterName: cluster-2
-      secret: default/kubeconfig-2
     - clusterName: cluster-3
       secret: default/kubeconfig-3

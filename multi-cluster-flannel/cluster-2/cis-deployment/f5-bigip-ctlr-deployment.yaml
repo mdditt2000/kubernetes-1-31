@@ -48,7 +48,7 @@ spec:
               "--static-routing-mode=true",
               "--orchestration-cni=flannel",
               "--extended-spec-configmap=kube-system/extended-spec-config",
-              "--multi-cluster-mode=primary",
+              "--multi-cluster-mode=secondary",
               "--log-level=DEBUG",
               "--insecure=true",
               "--custom-resource-mode=true",
