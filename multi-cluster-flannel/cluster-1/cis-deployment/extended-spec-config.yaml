@@ -13,3 +13,5 @@ data:
       secret: default/kubeconfig-1
     - clusterName: cluster-2
       secret: default/kubeconfig-2
+    - clusterName: cluster-3
+      secret: default/kubeconfig-3
