@@ -18,7 +18,7 @@ spec:
       # permissions
       containers:
         - name: k8s-bigip-ctlr
-          image: "quay.io/f5networks/k8s-bigip-ctlr-devel:intel-b2"
+          image: "quay.io/f5networks/k8s-bigip-ctlr-devel:intel-b6"
           env:
             - name: BIGIP_USERNAME
               valueFrom:
@@ -44,6 +44,7 @@ spec:
               "--bigip-url=10.192.125.63",
               "--bigip-partition=k8s",
               "--namespace=default",
+              "--namespace=kube-system",
               "--pool-member-type=cluster",
               "--static-routing-mode=true",
               "--orchestration-cni=flannel",
