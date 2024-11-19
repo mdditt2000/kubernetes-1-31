@@ -121,9 +121,11 @@ systemctl enable --now kubelet
 
 Step 7: Install Kubernetes Cluster on Rocky Linux 9
 
-kubeadm init --pod-network-cidr=10.246.0.0/16   ---- Master only for cluster-1
-kubeadm init --pod-network-cidr=10.246.0.0/16   ---- Master only for cluster-2
+```
+kubeadm init --pod-network-cidr=10.244.0.0/16   ---- Master only for cluster-1
+kubeadm init --pod-network-cidr=10.245.0.0/16   ---- Master only for cluster-2
 kubeadm init --pod-network-cidr=10.246.0.0/16   ---- Master only for cluster-3
+```
 
 ```
 mkdir -p $HOME/.kube
