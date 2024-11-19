@@ -1,4 +1,4 @@
-# Multi-Cluster Deployment using Rocky Linux
+# Multi-Cluster Kubernetes 1.31 Deployment using Rocky Linux 9.4
 
 Demo on YouTube [video]()
 
