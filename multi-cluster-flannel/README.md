@@ -1,6 +1,6 @@
 # Multi-Cluster Flannel Deployment using Static Route from F5 CIS
 
-Demo on YouTube [video]()
+Demo on YouTube [video](https://youtu.be/XZHcnKfG1yc)
 
 Multiple kubernetes 1.31 cluster using default Flannel CNI with unique POD CIDRs. Creating multiple **VXLAN** tunnels will **not work** for multi-cluster deployments so routing needs to be implemented. F5 CIS can achieve this with **StaticRouteSupport** This repo demonstrates the new feature and provides a recorded demo on YouTube. Unique POD CIDR are a requirement for flannel. Diagram below represents the deployment
 
