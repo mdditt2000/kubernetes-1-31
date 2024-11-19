@@ -44,6 +44,7 @@ spec:
               "--bigip-url=10.192.125.63",
               "--bigip-partition=k8s",
               "--namespace=default",
+              "--namespace=kube-system",
               "--pool-member-type=cluster",
               "--static-routing-mode=true",
               "--orchestration-cni=flannel",

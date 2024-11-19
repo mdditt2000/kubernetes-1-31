@@ -27,6 +27,13 @@ spec:
         service: hello-world-app
         servicePort: 8080
         weight: 50
+    monitor:
+      interval: 20
+      timeout: 10
+      type: tcp
+      targetPort: 8080
+
+    
     
   
 
