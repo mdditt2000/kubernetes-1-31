@@ -1,14 +1,14 @@
-# BIG-IP Multi-Cluster for Kubernetes
+# F5 BIG-IP Multi-Cluster for Kubernetes
 
-Demo on YouTube [video](https://youtu.be/XZHcnKfG1yc)
+Demo on YouTube [video]()
 
-This youtube demo and and GitHub repo demonstrates how to use F5 BIG-IP for your multi-cluster Kubernetes environments. This solution has made tremendous progress over the last year and I want thank everybody who validated and provided feedback. We believe now that **BIG-IP Multi-Cluster for Kubernetes** is ready for primetime! 
+This YouTube demo and and GitHub repo demonstrates how to use F5 BIG-IP for your multi-cluster Kubernetes environments. This solution has made tremendous progress over the last year and I want thank everybody who tested and provided feedback. We believe now that **F5 BIG-IP Multi-Cluster for Kubernetes** is ready for primetime! 
 
-In this environment i am using the following
+In this environment I am using the following
 
 * 3 kubernetes 1.31 cluster
 * Flannel installed with unique POD networks
-* Ratio traffic distrubution  between Kubernetes clusters using CRDs
+* Ratio traffic distribution between Kubernetes clusters using CRDs
 * Service Type Load Balancing is coming next
 * Keeping Ingress simple and requiring no hacking away at the CNI stack for external networking
 * No additional licensing required other than BIG-IP LTM
