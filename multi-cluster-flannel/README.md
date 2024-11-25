@@ -39,7 +39,9 @@ Wrote static route config section: {[{k8s-master-cluster-1-10.192.125.116 10.244
 
 # CIS Primary and Secondary
 
-As you can see from the diagram their are two instances of CIS. One instance in cluster-1 is primary and second instance is secondary in cluster-2. CIS uses a heartbeat to determine the HA state. This primary/secondary heartbeat will be re-worked in CIS 2.20 coming next. We understand the challenges and going to make some changes.
+As you can see from the diagram their are **two instances** of CIS. One instance in **cluster-1 is primary** and second instance is **secondary in cluster-2**. CIS uses a heartbeat to determine the HA state. 
+
+* This **primary/secondary heartbeat** will be re-worked in CIS 2.20 coming next. We understand the challenges and going to make some changes.
 
 However today the configuration is created usin the configmap
 
