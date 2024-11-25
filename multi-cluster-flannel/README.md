@@ -103,3 +103,5 @@ spec:
       type: tcp
       targetPort: 8080
 ```
+
+CRD [repo](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-flannel/cluster-1/cafe/unsecure/ts-hello.yaml)
