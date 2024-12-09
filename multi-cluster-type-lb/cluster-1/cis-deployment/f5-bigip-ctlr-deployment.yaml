@@ -50,7 +50,7 @@ spec:
               "--orchestration-cni=flannel",
               "--extended-spec-configmap=kube-system/extended-spec-config",
               "--multi-cluster-mode=primary",
-              "--local-cluster=cluster-1",
+              "--local-cluster-name=cluster-1",
               "--log-level=DEBUG",
               "--insecure=true",
               "--custom-resource-mode=true",
