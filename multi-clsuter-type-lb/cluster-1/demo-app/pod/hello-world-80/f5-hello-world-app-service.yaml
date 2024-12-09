@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    cis.f5.com/ip: 10.192.125.123
+    cis.f5.com/multiClusterServices: |
+      [
+        {"clusterName": "cluster-1", "weight": 50},
+        {"clusterName": "cluster-2", "weight": 50},
+        {"clusterName": "cluster-3", "weight": 50}
+      ]
+  name: hello-world-app
+  labels:
+    app: hello-world-app
+spec:
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: hello-world-app
+  type: LoadBalancer
