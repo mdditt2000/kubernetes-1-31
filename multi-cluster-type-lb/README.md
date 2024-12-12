@@ -12,10 +12,11 @@ In this environment I am using the following
 * Service Type Load Balancing is coming next
 * Keeping Ingress simple and requiring no hacking away at the CNI stack for external networking
 * No additional licensing required other than BIG-IP LTM
+* No CRDs, using the service to define the BIG-IP ingress via Service-Type LoadBalancing
 
-F5 CIS can achieve this with **StaticRouteSupport** This repo demonstrates the new feature and provides a recorded demo on YouTube. Unique POD CIDR are a requirement for flannel. Diagram below represents the deployment. This is currently getting validated for Windows Nodes! 
+**Note** F5 CIS can achieve this with **StaticRouteSupport** This repo demonstrates the new feature and provides a recorded demo on YouTube. Unique POD CIDR are a requirement for flannel. Diagram below represents the deployment. This is currently getting validated for Windows Nodes! 
 
-![diagram](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-flannel/diagram/2024-11-19_10-47-59.png)
+![diagram](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-type-lb/diagram/2024-11-19_10-47-59.png)
 
 ** the following arguments allows CIS to configure static routes on BIG-IP with node/pod subnets assigned to the nodes in kubernetes clusters. This enables direct routing from BIG-IP to kubernetes Pods using cluster mode without encapsulating into tunnel.
 
@@ -25,11 +26,11 @@ args:
   --orchestration-cni=<flannel>
 ```
 
-CIS [repo](https://github.com/mdditt2000/kubernetes-1-31/tree/main/multi-cluster-flannel/cluster-1/cis-deployment)
+CIS [repo](https://github.com/mdditt2000/kubernetes-1-31/tree/main/multi-cluster-type-lb/cluster-1/cis-deployment)
 
 Diagram shows configured routes on BIG-IP
 
-![Routes](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-flannel/diagram/2024-11-19_10-54-23.png)
+![Routes](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-type-lb/diagram/2024-11-19_10-54-23.png)
 
 CIS logs showing API call to BIG-IP to configure routes
 
@@ -43,9 +44,19 @@ As you can see from the diagram their are **two instances** of CIS. One instance
 
 * This **primary/secondary heartbeat** will be re-worked in CIS 2.20 coming next. We understand the challenges and going to make some changes.
 
-However today the configuration is created usin the configmap
+However today the configuration is created using the ConfigMap. Also **note** **serviceTypeLBDiscover** needs to be set for none local services as CIS does not discover these services by default. 
 
 ```
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    f5nr: "true"
+  name: extended-spec-config
+  namespace: kube-system
+data:
+  extendedSpec: |
+    mode: default
     highAvailabilityCIS:
       primaryEndPoint: http://10.192.125.122/
       probeInterval: 30
@@ -56,52 +67,43 @@ However today the configuration is created usin the configmap
       secondaryCluster:
         clusterName: cluster-2
         secret: default/kubeconfig-2
+        serviceTypeLBDiscovery: true
     externalClustersConfig:
     - clusterName: cluster-3
       secret: default/kubeconfig-3
+      serviceTypeLBDiscovery: true
 ```
 
-Extended ConfigMap [repo](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-flannel/cluster-1/cis-deployment/extended-spec-config.yaml)
+Extended ConfigMap [repo](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-type-lb/cluster-1/cis-deployment/extended-spec-config.yaml)
 
-# Ratio Traffic Configuration between Kubernetes Clusters
+# Ratio Traffic Configuration between Kubernetes Clusters using Service Type Load Balancing
 
 Using a very simple TransportServer CRD to manipulate traffic between the cluster. Simple change the weight in the CRD to present the desired load balancing distribution by BIG-IP across the clusters. Only need one CRD where CIS is running. In this case cluster-1 primary and cluster-2 secondary
 
 ```
-apiVersion: cis.f5.com/v1
-kind: TransportServer
+apiVersion: v1
+kind: Service
 metadata:
+  annotations:
+    cis.f5.com/ip: 10.192.125.123
+    cis.f5.com/multiClusterServices: |
+      [
+        {"clusterName": "cluster-1", "weight": 50},
+        {"clusterName": "cluster-2", "weight": 50},
+        {"clusterName": "cluster-3", "weight": 50}
+      ]
+  name: hello-world-app
   labels:
-    f5cr: "true"
-  name: ts-hello
-  namespace: default
+    app: hello-world-app
 spec:
-  virtualServerAddress: 10.192.125.123
-  virtualServerPort: 80
-  mode: standard
-  pool:
-    multiClusterServices:
-    # CIS supports to refer svs from local cluster and ha cluster
-      - clusterName: cluster-1
-        namespace: default
-        service: hello-world-app
-        servicePort: 8080
-        weight: 50
-      - clusterName: cluster-2
-        namespace: default
-        service: hello-world-app
-        servicePort: 8080
-        weight: 50
-      - clusterName: cluster-3
-        namespace: default
-        service: hello-world-app
-        servicePort: 8080
-        weight: 50
-    monitor:
-      interval: 20
-      timeout: 10
-      type: tcp
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8080
       targetPort: 8080
+  selector:
+    app: hello-world-app
+  type: LoadBalancer
 ```
 
-CRD [repo](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-flannel/cluster-1/cafe/unsecure/ts-hello.yaml)
+CRD [repo](https://github.com/mdditt2000/kubernetes-1-31/blob/main/multi-cluster-type-lb/cluster-1/demo-app/pod/hello-world-80/f5-hello-world-app-service.yaml)
