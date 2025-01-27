@@ -2,4 +2,4 @@
 
 Diagram shows architecture BIG-IP
 
-![diagram](https://github.com/mdditt2000/kubernetes-1-31/blob/main/staticroutesupport/flannel/picture/2024-11-11_15-24-09.png)
+![diagram](https://github.com/mdditt2000/kubernetes-1-31/blob/main/bigip-for-k8s/diagram/2025-01-27_14-24-57.png)
