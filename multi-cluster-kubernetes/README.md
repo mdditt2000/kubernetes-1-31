@@ -22,6 +22,45 @@
 - Enhanced security and compliance: Protect your applications and data from threats, meet regulatory requirements, and ensure secure access
 - Improved performance and scalability: Optimize application performance, handle traffic spikes, and scale your infrastructure seamlessly
 
+Using a very simple CRD to efficiency handle traffic between the cluster. Simple change the weight in the CRD to present the desired load balancing distribution by BIG-IP across the clusters. Only need one CRD where CIS is running. In this case cluster-1 primary and cluster-2 secondary
+
+```
+apiVersion: cis.f5.com/v1
+kind: TransportServer
+metadata:
+  labels:
+    f5cr: "true"
+  name: ts-hello
+  namespace: default
+spec:
+  virtualServerAddress: 10.192.125.123
+  virtualServerPort: 80
+  mode: standard
+  pool:
+    multiClusterServices:
+    # CIS supports to refer svs from local cluster and ha cluster
+      - clusterName: cluster-1
+        namespace: default
+        service: hello-world-app
+        servicePort: 8080
+        weight: 50
+      - clusterName: cluster-2
+        namespace: default
+        service: hello-world-app
+        servicePort: 8080
+        weight: 50
+      - clusterName: cluster-3
+        namespace: default
+        service: hello-world-app
+        servicePort: 8080
+        weight: 50
+    monitor:
+      interval: 20
+      timeout: 10
+      type: tcp
+      targetPort: 8080
+```
+
 ## Conclusion: Empowering Multi-Cluster Kubernetes Deployments with F5 BIG-IP
 - F5 BIG-IP is a game-changer for managing and securing multi-cluster Kubernetes environments, providing the necessary tools and capabilities for success
 - This video has explored the key benefits and features of F5 BIG-IP, showcasing its ability to simplify, secure, and optimize your distributed Kubernetes infrastructure
