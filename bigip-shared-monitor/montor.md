@@ -7,7 +7,7 @@ kind: TransportServer
 metadata:
   name: test-ts
 spec:
-  partition: big-ip-k8s
+  partition: big-ip-k8s  --- you can reference a global tenent in the CIS specs
   mode: standard
   pool:
     monitors:
@@ -38,7 +38,7 @@ metadata:
   name: vs-1
 spec:
   host: *.example.com
-  partition: big-ip-k8s
+  partition: big-ip-k8s  --- you can reference a global tenent in the CIS specs
   pools:
   - monitors:
     - name: /Common/tcp-half
