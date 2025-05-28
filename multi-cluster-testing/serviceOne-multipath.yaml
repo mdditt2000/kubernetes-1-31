@@ -4,9 +4,9 @@ metadata:
   labels:
     f5cr: "true"
   name: serviceOne-virtual-server
-  namespace: serviceOne
+  namespace: services
 spec:
-  host: serviceOne.example.com
+  host: services.example.com
   virtualServerAddress: 10.8.0.4
   tlsProfileName: tls-tls1.3
   pools:
@@ -29,6 +29,28 @@ spec:
         weight: 30
       - clusterName: cluster4
         namespace: serviceOne
+        service: router-internal-default
+        servicePort: 443
+        weight: 30
+      - path: /servicetwo
+      multiClusterServices:
+      - clusterName: cluster1
+        namespace: servicetwo
+        service: router-internal-default
+        servicePort: 443
+        weight: 30
+      - clusterName: cluster2
+        namespace: servicetwo
+        service: router-internal-default
+        servicePort: 443
+        weight: 30
+      - clusterName: cluster3
+        namespace: servicetwo
+        service: router-internal-default
+        servicePort: 443
+        weight: 30
+      - clusterName: cluster4
+        namespace: servicetwo
         service: router-internal-default
         servicePort: 443
         weight: 30
