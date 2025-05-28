@@ -6,7 +6,7 @@ metadata:
   name: serviceOne-virtual-server
   namespace: serviceOne
 spec:
-  host: cafe.example.com
+  host: serviceOne.example.com
   virtualServerAddress: 10.8.0.4
   tlsProfileName: tls-tls1.3
   httpTraffic: redirect
@@ -16,41 +16,21 @@ spec:
       - clusterName: cluster1
         namespace: serviceOne
         service: router-internal-default
-        servicePort: 80
+        servicePort: 443
         weight: 30
       - clusterName: cluster2
         namespace: serviceOne
         service: router-internal-default
-        servicePort: 80
+        servicePort: 443
         weight: 30
       - clusterName: cluster3
         namespace: serviceOne
         service: router-internal-default
-        servicePort: 80
+        servicePort: 443
         weight: 30
       - clusterName: cluster4
         namespace: serviceOne
         service: router-internal-default
-        servicePort: 80
-        weight: 30
-      - clusterName: cluster5
-        namespace: serviceOne
-        service: router-internal-default
-        servicePort: 80
-        weight: 30
-      - clusterName: cluster6
-        namespace: serviceOne
-        service: router-internal-default
-        servicePort: 80
-        weight: 30
-      - clusterName: cluster7
-        namespace: serviceOne
-        service: router-internal-default
-        servicePort: 80
-        weight: 30
-      - clusterName: cluster8
-        namespace: serviceOne
-        service: router-internal-default
-        servicePort: 80
+        servicePort: 443
         weight: 30
 
