@@ -32,3 +32,8 @@ spec:
           service: hello-world-app
           servicePort: 8080
           weight: 50
+
+    
+    
+  
+
