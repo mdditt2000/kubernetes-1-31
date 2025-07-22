@@ -1,0 +1,34 @@
+apiVersion: cis.f5.com/v1
+kind: VirtualServer
+metadata:
+  name: vs-hello
+  namespace: default
+  labels:
+    f5cr: "true"
+spec:
+  host: cafe.example.com
+  virtualServerAddress: 10.192.125.123
+  virtualServerPort: 80
+  pools:
+    - path: /
+      monitor:
+        - type: tcp
+          targetPort: 8080
+          interval: 10
+          timeout: 30
+      multiClusterServices:
+        - clusterName: cluster-1
+          namespace: default
+          service: hello-world-app
+          servicePort: 8080
+          weight: 50
+        - clusterName: cluster-2
+          namespace: default
+          service: hello-world-app
+          servicePort: 8080
+          weight: 50
+        - clusterName: cluster-3
+          namespace: default
+          service: hello-world-app
+          servicePort: 8080
+          weight: 50
