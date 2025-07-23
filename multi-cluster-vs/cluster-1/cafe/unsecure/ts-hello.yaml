@@ -1,9 +1,9 @@
 apiVersion: cis.f5.com/v1
-kind: VirtualServer
+kind: TransportServer
 metadata:
   labels:
     f5cr: "true"
-  name: vs-hello
+  name: ts-hello
   namespace: default
 spec:
   virtualServerAddress: 10.192.125.124
