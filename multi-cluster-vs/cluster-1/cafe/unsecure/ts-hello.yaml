@@ -6,8 +6,8 @@ metadata:
   name: vs-hello
   namespace: default
 spec:
-  virtualServerAddress: 10.192.125.123
-  virtualServerHTTPPort: 80
+  virtualServerAddress: 10.192.125.124
+  virtualServerPort: 80
   pool:
     multiClusterServices:
     # CIS supports to refer svs from local cluster and ha cluster
