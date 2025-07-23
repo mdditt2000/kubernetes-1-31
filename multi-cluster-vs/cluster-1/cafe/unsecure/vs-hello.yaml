@@ -6,6 +6,7 @@ metadata:
   name: vs-hello
   namespace: default
 spec:
+  host: cafe.example.com
   virtualServerAddress: 10.192.125.123
   virtualServerHTTPPort: 80
   pools:
