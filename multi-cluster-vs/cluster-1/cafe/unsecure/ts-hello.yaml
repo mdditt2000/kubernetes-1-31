@@ -8,6 +8,7 @@ metadata:
 spec:
   virtualServerAddress: 10.192.125.124
   virtualServerPort: 80
+  mode: standard
   pool:
     multiClusterServices:
     # CIS supports to refer svs from local cluster and ha cluster
