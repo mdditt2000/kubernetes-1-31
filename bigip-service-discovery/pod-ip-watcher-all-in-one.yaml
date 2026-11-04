@@ -1,0 +1,197 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ip-watcher-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: pod-ip-watcher-sa
+  namespace: ip-watcher-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pod-ip-watcher-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: pod-ip-watcher-binding
+subjects:
+  - kind: ServiceAccount
+    name: pod-ip-watcher-sa
+    namespace: ip-watcher-system
+roleRef:
+  kind: ClusterRole
+  name: pod-ip-watcher-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pod-ip-watcher-script
+  namespace: ip-watcher-system
+data:
+  pod_ip_watcher.py: |
+    import json
+    import logging
+    import os
+    import signal
+    import sys
+    import time
+    from datetime import datetime, timezone
+    from kubernetes import client, config, watch
+    from kubernetes.client.rest import ApiException
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    stop_requested = False
+
+    def handle_signal(signum, frame):
+        global stop_requested
+        logging.info(f"Signal {signum} received. Exiting...")
+        stop_requested = True
+
+    signal.signal(signal.SIGTERM, handle_signal)
+    signal.signal(signal.SIGINT, handle_signal)
+
+    def extract_pod_info(pod):
+        if not pod.status or not pod.status.pod_ip:
+            return None
+        return {
+            "name": pod.metadata.name,
+            "namespace": pod.metadata.namespace,
+            "pod_ip": pod.status.pod_ip,
+            "host_ip": pod.status.host_ip,
+            "phase": pod.status.phase,
+            "node_name": pod.spec.node_name
+        }
+
+    def write_json_atomically(pods_state, output_path):
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        temp_path = f"{output_path}.tmp"
+        payload = {
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "total_pods": len(pods_state),
+            "pods": list(pods_state.values())
+        }
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, indent=2)
+        os.replace(temp_path, output_path)
+        logging.info(f"Wrote {len(pods_state)} pod records to {output_path}")
+
+    def watch_pods(namespace, output_path):
+        config.load_incluster_config()
+        v1 = client.CoreV1Api()
+        pods_state = {}
+
+        while not stop_requested:
+            try:
+                list_func = v1.list_namespaced_pod if namespace else v1.list_pod_for_all_namespaces
+                kwargs = {"namespace": namespace} if namespace else {}
+                
+                pod_list = list_func(**kwargs)
+                pods_state.clear()
+                for pod in pod_list.items:
+                    info = extract_pod_info(pod)
+                    if info:
+                        pods_state[f"{pod.metadata.namespace}/{pod.metadata.name}"] = info
+                write_json_atomically(pods_state, output_path)
+
+                w = watch.Watch()
+                for event in w.stream(list_func, resource_version=pod_list.metadata.resource_version, timeout_seconds=300, **kwargs):
+                    if stop_requested:
+                        w.stop()
+                        break
+                    pod = event["object"]
+                    key = f"{pod.metadata.namespace}/{pod.metadata.name}"
+                    changed = False
+                    if event["type"] in ("ADDED", "MODIFIED"):
+                        new_info = extract_pod_info(pod)
+                        if new_info and pods_state.get(key) != new_info:
+                            pods_state[key] = new_info
+                            changed = True
+                        elif not new_info and key in pods_state:
+                            del pods_state[key]
+                            changed = True
+                    elif event["type"] == "DELETED" and key in pods_state:
+                        del pods_state[key]
+                        changed = True
+
+                    if changed:
+                        write_json_atomically(pods_state, output_path)
+            except ApiException as e:
+                if e.status == 410:
+                    logging.warning("Stream expired (410). Re-listing...")
+                else:
+                    logging.error(f"K8s API error: {e}. Retrying in 5s...")
+                    time.sleep(5)
+            except Exception as e:
+                logging.error(f"Watch error: {e}. Retrying in 5s...")
+                time.sleep(5)
+
+    if __name__ == "__main__":
+        ns = os.getenv("TARGET_NAMESPACE", "").strip() or None
+        out = os.getenv("OUTPUT_FILE_PATH", "/data/pod_ips.json").strip()
+        watch_pods(ns, out)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-ip-watcher
+  namespace: ip-watcher-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pod-ip-watcher
+  template:
+    metadata:
+      labels:
+        app: pod-ip-watcher
+    spec:
+      serviceAccountName: pod-ip-watcher-sa
+      initContainers:
+        - name: install-deps
+          image: python:3.11-slim
+          command: ["pip", "install", "--no-cache-dir", "--target=/deps", "kubernetes>=29.0.0"]
+          volumeMounts:
+            - name: python-deps
+              mountPath: /deps
+      containers:
+        - name: watcher
+          image: python:3.11-slim
+          command: ["python", "/scripts/pod_ip_watcher.py"]
+          env:
+            - name: PYTHONPATH
+              value: "/deps"
+            - name: TARGET_NAMESPACE
+              value: "" # Leave empty for all namespaces, or set e.g. "default"
+            - name: OUTPUT_FILE_PATH
+              value: "/data/pod_ips.json"
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: script-vol
+              mountPath: /scripts
+            - name: python-deps
+              mountPath: /deps
+            - name: output-data
+              mountPath: /data
+      volumes:
+        - name: script-vol
+          configMap:
+            name: pod-ip-watcher-script
+        - name: python-deps
+          emptyDir: {}
+        - name: output-data
+          emptyDir: {}
