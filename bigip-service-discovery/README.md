@@ -1,4 +1,4 @@
-*Note: The links and images in this document may point to external sources. Please review them before opening.*
+*Note: the links and images in this document may point to external sources. Please review them before opening.*
 
 # Kubernetes Pod IP Watcher for F5 BIG-IP AS3 Service Discovery
 
@@ -16,8 +16,6 @@ It continuously monitors Kubernetes Pod lifecycle events (`ADDED`, `MODIFIED`, `
 ## Table of Contents
 
 * [Architecture Diagram](#architecture-diagram)
-* [Pod Addition Flow Diagram](#pod-addition-flow-diagram)
-* [Full Event Sequence Flow](#full-event-sequence-flow)
 * [Key Features](#key-features)
 * [Repository Structure](#repository-structure)
 * [Prerequisites](#prerequisites)
@@ -80,163 +78,6 @@ flowchart TB
     class K8S_API,SVC,POD_A,POD_B k8s;
     class AS3,POOL,VS f5;
     class WATCHER,SCRIPT_CM,STORAGE comp;
-```
-
----
-
-## Pod Addition Flow Diagram
-
-This flowchart outlines the end-to-end lifecycle and decision logic executed across Kubernetes, the controller cache, F5 AS3 service discovery, and TMOS load balancing when a new Pod is deployed:
-
-```mermaid
-flowchart TD
-    subgraph STAGE1["Stage 1: Pod Scheduling & CNI Assignment"]
-        A([Deploy / Scale Pod<br/>kubectl apply / CI/CD]) --> B[kube-scheduler assigns Pod to Worker Node]
-        B --> C[Node CNI Plugin allocates IP address<br/>e.g., 10.244.2.88]
-        C --> D[Kubelet updates Pod Status<br/>phase: Running | podIP: 10.244.2.88]
-        D --> E[kube-apiserver commits status to etcd]
-    end
-
-    subgraph STAGE2["Stage 2: Real-Time Watch Stream & Ingestion"]
-        E == "HTTP Streaming Watch Event: ADDED" ==> F[pod-ip-watcher Controller]
-        F --> G{extract_pod_info<br/>Valid Pod IP assigned?}
-        G -- No --> H[Discard / Wait for subsequent MODIFIED event]
-        G -- Yes --> I[Update in-memory dictionary<br/>pods_state key: default/pod-name]
-    end
-
-    subgraph STAGE3["Stage 3: Atomic Cache Serialization"]
-        I --> J[Serialize all active Pods to root JSON Array]
-        J --> K[Write to temporary buffer<br/>/data/pod_ips.json.tmp]
-        K --> L["Atomic swap: os.replace()<br/>/data/pod_ips.json"]
-        L --> M[("Local File Cache Updated<br/>(Zero read contention / lock-free)")]
-    end
-
-    subgraph STAGE4["Stage 4: F5 AS3 Dynamic Discovery"]
-        N([AS3 Polling Timer Elapsed<br/>updateInterval: 15s]) --> O["F5 restnoded (getNodes.js)<br/>HTTP GET /v1/health/service/my-service?passing=true"]
-        O --> P[pod-ip-watcher HTTP Server on Port 8080]
-        M -. "Read current state" .-> P
-        P -- "200 OK: Root JSON Array [ {...} ]" --> Q{getNodes.js Validation<br/>Array.isArray === true?}
-        Q -- No --> R[Error: Data must be a JSON array of objects]
-        Q -- Yes --> S["Execute JMESPath query<br/>[*].{id: id, ip: ip}"]
-    end
-
-    subgraph STAGE5["Stage 5: TMOS Sync & Health Probing"]
-        S --> T[mcpd / tmsh transaction:<br/>Add 10.244.2.88:80 to LTM web_pool]
-        T --> U[BIG-IP initiates Active Health Check<br/>HTTP GET / to 10.244.2.88:80]
-        U --> V{Monitor Response OK?}
-        V -- No --> W[Member marked UNCHECKED / DOWN]
-        V -- Yes --> X[Pool member marked UP in LTM]
-    end
-
-    subgraph STAGE6["Stage 6: Client Data Plane Forwarding"]
-        Y([External Client Request]) --> Z["Virtual Server (192.168.10.150:80)"]
-        Z --> AA[Load balances across active pool members]
-        AA == "Routed via CNI overlay / BGP" ==> AB["Target Pod (10.244.2.88:80)"]
-        X -. "Enabled for traffic distribution" .-> AA
-    end
-
-    classDef step fill:#1f2937,stroke:#58a6ff,stroke-width:1px,color:#fff;
-    classDef decision fill:#0e4429,stroke:#3fb950,stroke-width:1px,color:#fff;
-    classDef error fill:#490202,stroke:#f85149,stroke-width:1px,color:#fff;
-    classDef startEnd fill:#326ce5,stroke:#fff,stroke-width:1px,color:#fff;
-    classDef f5step fill:#791a1a,stroke:#e4002b,stroke-width:1px,color:#fff;
-
-    class A,N,Y startEnd;
-    class B,C,D,E,F,I,J,K,L,M,P,AB step;
-    class G,Q,V decision;
-    class H,R,W error;
-    class O,S,T,U,X,Z,AA f5step;
-```
-
----
-
-## Full Event Sequence Flow
-
-This diagram illustrates the complete, full lifecycle of events across all actors—from controller bootstrap and initial synchronization, to steady-state polling, dynamic scale-up/scale-down handling, connection drop recovery (`410 Gone`), and client data plane forwarding:
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor Client as External Client
-    participant K8s as kube-apiserver
-    participant Watcher as pod-ip-watcher (Daemon)
-    participant Disk as Local File Cache (/data)
-    participant HTTP as Discovery HTTP Server (8080)
-    participant AS3 as F5 restnoded (getNodes.js)
-    participant LTM as BIG-IP LTM (mcpd / Pool)
-    participant Pod as Kubernetes Target Pods
-
-    %% Phase 1: Controller Bootstrap
-    rect rgb(30, 41, 59)
-    Note over Watcher,Disk: Phase 1: Controller Initialization & Initial Reconciliation
-    Watcher->>K8s: GET /api/v1/namespaces/default/pods (Initial List)
-    K8s-->>Watcher: 200 OK (Pod-A: 10.244.1.45, resourceVersion="10050")
-    Watcher->>Watcher: Populate in-memory pods_state = {"pod-a": {IP: 10.244.1.45}}
-    Watcher->>Disk: Atomic write via os.replace() -> /data/pod_ips.json
-    Watcher->>K8s: GET /api/v1/namespaces/default/pods?watch=true&resourceVersion=10050
-    Note over K8s,Watcher: Persistent HTTP Watch Stream Open
-    end
-
-    %% Phase 2: AS3 Initial Polling
-    rect rgb(55, 19, 24)
-    Note over AS3,LTM: Phase 2: Steady-State AS3 Dynamic Discovery
-    AS3->>HTTP: GET /v1/health/service/my-service?passing=true
-    HTTP->>Disk: Read /data/pod_ips.json
-    Disk-->>HTTP: Return current JSON array
-    HTTP-->>AS3: 200 OK: [{"id": "pod-a", "ip": {"private": "10.244.1.45", "public": "10.244.1.45"}}]
-    AS3->>AS3: Verify Array.isArray(data) === true
-    AS3->>AS3: Apply JMESPath: [*].{id: id, ip: ip}
-    AS3->>LTM: Sync Pool Members -> Add [10.244.1.45:80]
-    LTM->>Pod: Send Active Health Monitor (HTTP GET /)
-    Pod-->>LTM: 200 OK -> Mark 10.244.1.45:80 UP
-    end
-
-    %% Phase 3: Pod Addition / Scaling
-    rect rgb(22, 51, 35)
-    Note over K8s,LTM: Phase 3: Real-Time Pod Added (Scale-Out)
-    K8s-->>Watcher: Watch Stream Event: ADDED (Pod-B: 10.244.2.88)
-    Watcher->>Watcher: Extract IP & update pods_state += {"pod-b": 10.244.2.88}
-    Watcher->>Disk: Atomic write -> /data/pod_ips.json (Pods: A, B)
-    Note over AS3: Polling interval triggers (15s)
-    AS3->>HTTP: GET /v1/health/service/my-service?passing=true
-    HTTP-->>AS3: 200 OK: [Pod-A, Pod-B]
-    AS3->>LTM: Update Pool Members -> Add [10.244.2.88:80]
-    LTM->>Pod: Active Health Monitor probe to 10.244.2.88:80
-    Pod-->>LTM: 200 OK -> Mark 10.244.2.88:80 UP
-    end
-
-    %% Phase 4: Data Plane Forwarding
-    rect rgb(35, 45, 65)
-    Note over Client,Pod: Phase 4: Client Traffic Load Balancing
-    Client->>LTM: HTTP Request to Virtual Server (192.168.10.150:80)
-    LTM->>Pod: Route to 10.244.1.45:80 (CNI Overlay Route)
-    Client->>LTM: HTTP Request to Virtual Server (192.168.10.150:80)
-    LTM->>Pod: Route to 10.244.2.88:80 (CNI Overlay Route)
-    end
-
-    %% Phase 5: Pod Deletion
-    rect rgb(55, 19, 24)
-    Note over K8s,LTM: Phase 5: Real-Time Pod Deleted (Scale-In / Failure)
-    K8s-->>Watcher: Watch Stream Event: DELETED (Pod-A)
-    Watcher->>Watcher: Delete "pod-a" from pods_state
-    Watcher->>Disk: Atomic write -> /data/pod_ips.json (Pods: B)
-    Note over AS3: Polling interval triggers (15s)
-    AS3->>HTTP: GET /v1/health/service/my-service?passing=true
-    HTTP-->>AS3: 200 OK: [Pod-B]
-    AS3->>LTM: Update Pool Members -> Remove [10.244.1.45:80]
-    end
-
-    %% Phase 6: Connection Recovery / 410 Gone
-    rect rgb(45, 30, 20)
-    Note over K8s,Watcher: Phase 6: Resilient Watch Stream Recovery
-    K8s-->>Watcher: HTTP 410 Gone (resourceVersion expired / etcd compacted)
-    Watcher->>Watcher: Catch ApiException(status=410)
-    Watcher->>K8s: GET /api/v1/namespaces/default/pods (Re-sync List)
-    K8s-->>Watcher: 200 OK (Pod-B, new resourceVersion="10580")
-    Watcher->>Disk: Re-verify & update /data/pod_ips.json
-    Watcher->>K8s: GET /api/v1/namespaces/default/pods?watch=true&resourceVersion=10580
-    Note over K8s,Watcher: Watch Stream Resumed Without Dropping Discovery API
-    end
 ```
 
 ---
